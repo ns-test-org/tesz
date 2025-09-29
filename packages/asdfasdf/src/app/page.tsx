@@ -1,103 +1,183 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState } from 'react';
+
+export default function Calculator() {
+  const [display, setDisplay] = useState('0');
+  const [previousValue, setPreviousValue] = useState<number | null>(null);
+  const [operation, setOperation] = useState<string | null>(null);
+  const [waitingForOperand, setWaitingForOperand] = useState(false);
+
+  const inputNumber = (num: string) => {
+    if (waitingForOperand) {
+      setDisplay(num);
+      setWaitingForOperand(false);
+    } else {
+      setDisplay(display === '0' ? num : display + num);
+    }
+  };
+
+  const inputDecimal = () => {
+    if (waitingForOperand) {
+      setDisplay('0.');
+      setWaitingForOperand(false);
+    } else if (display.indexOf('.') === -1) {
+      setDisplay(display + '.');
+    }
+  };
+
+  const clear = () => {
+    setDisplay('0');
+    setPreviousValue(null);
+    setOperation(null);
+    setWaitingForOperand(false);
+  };
+
+  const performOperation = (nextOperation: string) => {
+    const inputValue = parseFloat(display);
+
+    if (previousValue === null) {
+      setPreviousValue(inputValue);
+    } else if (operation) {
+      const currentValue = previousValue || 0;
+      const newValue = calculate(currentValue, inputValue, operation);
+
+      setDisplay(String(newValue));
+      setPreviousValue(newValue);
+    }
+
+    setWaitingForOperand(true);
+    setOperation(nextOperation);
+  };
+
+  const calculate = (firstValue: number, secondValue: number, operation: string): number => {
+    switch (operation) {
+      case '+':
+        return firstValue + secondValue;
+      case '-':
+        return firstValue - secondValue;
+      case '×':
+        return firstValue * secondValue;
+      case '÷':
+        return firstValue / secondValue;
+      case '=':
+        return secondValue;
+      default:
+        return secondValue;
+    }
+  };
+
+  const handleEquals = () => {
+    const inputValue = parseFloat(display);
+
+    if (previousValue !== null && operation) {
+      const newValue = calculate(previousValue, inputValue, operation);
+      setDisplay(String(newValue));
+      setPreviousValue(null);
+      setOperation(null);
+      setWaitingForOperand(true);
+    }
+  };
+
+  const Button = ({ 
+    onClick, 
+    className = '', 
+    children, 
+    variant = 'default' 
+  }: { 
+    onClick: () => void; 
+    className?: string; 
+    children: React.ReactNode;
+    variant?: 'default' | 'operator' | 'equals' | 'clear';
+  }) => {
+    const baseClasses = 'h-16 text-xl font-semibold rounded-xl transition-all duration-150 active:scale-95 shadow-lg';
+    
+    const variantClasses = {
+      default: 'bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white',
+      operator: 'bg-blue-500 hover:bg-blue-600 text-white shadow-blue-200 dark:shadow-blue-900',
+      equals: 'bg-green-500 hover:bg-green-600 text-white shadow-green-200 dark:shadow-green-900',
+      clear: 'bg-red-500 hover:bg-red-600 text-white shadow-red-200 dark:shadow-red-900'
+    };
+
+    return (
+      <button
+        className={`${baseClasses} ${variantClasses[variant]} ${className}`}
+        onClick={onClick}
+      >
+        {children}
+      </button>
+    );
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6 w-full max-w-sm">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-center text-gray-800 dark:text-white mb-2">
+            Calculator
+          </h1>
+          <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl p-4 min-h-[80px] flex items-center justify-end">
+            <div className="text-right">
+              <div className="text-3xl font-mono font-bold text-gray-800 dark:text-white break-all">
+                {display}
+              </div>
+              {operation && previousValue !== null && (
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {previousValue} {operation}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <div className="grid grid-cols-4 gap-3">
+          {/* Row 1 */}
+          <Button onClick={clear} variant="clear" className="col-span-2">
+            Clear
+          </Button>
+          <Button onClick={() => performOperation('÷')} variant="operator">
+            ÷
+          </Button>
+          <Button onClick={() => performOperation('×')} variant="operator">
+            ×
+          </Button>
+
+          {/* Row 2 */}
+          <Button onClick={() => inputNumber('7')}>7</Button>
+          <Button onClick={() => inputNumber('8')}>8</Button>
+          <Button onClick={() => inputNumber('9')}>9</Button>
+          <Button onClick={() => performOperation('-')} variant="operator">
+            −
+          </Button>
+
+          {/* Row 3 */}
+          <Button onClick={() => inputNumber('4')}>4</Button>
+          <Button onClick={() => inputNumber('5')}>5</Button>
+          <Button onClick={() => inputNumber('6')}>6</Button>
+          <Button onClick={() => performOperation('+')} variant="operator">
+            +
+          </Button>
+
+          {/* Row 4 */}
+          <Button onClick={() => inputNumber('1')}>1</Button>
+          <Button onClick={() => inputNumber('2')}>2</Button>
+          <Button onClick={() => inputNumber('3')}>3</Button>
+          <Button onClick={handleEquals} variant="equals" className="row-span-2">
+            =
+          </Button>
+
+          {/* Row 5 */}
+          <Button onClick={() => inputNumber('0')} className="col-span-2">
+            0
+          </Button>
+          <Button onClick={inputDecimal}>.</Button>
+        </div>
+
+        <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+          Built with Next.js & Tailwind CSS
+        </div>
+      </div>
     </div>
   );
 }
+
